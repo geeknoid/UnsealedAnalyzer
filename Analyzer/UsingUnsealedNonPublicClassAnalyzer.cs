@@ -30,6 +30,12 @@ namespace Analyzer
 #pragma warning restore CPR121 // Specify 'concurrencyLevel' and 'capacity' in the ConcurrentDictionary ctor.
 #pragma warning restore RS1024 // Compare symbols correctly
 
+                // The strategy is simple:
+                //
+                //   * Accumulate all the classes which are potential candidates to be sealed based on their type definition
+                //   * For all classes in the compilation, accumulate all the base types for these classes
+                //   * Once the above is all done, produce a diagnostic for any candidate found, which is not used a base type
+
                 compilationStartAnalysisContext.RegisterSymbolAction(symbolAnalysisContext =>
                 {
                     if (symbolAnalysisContext.Symbol is INamedTypeSymbol t)
@@ -63,6 +69,7 @@ namespace Analyzer
                         var b = t.BaseType;
                         while (b != null)
                         {
+                            b = b.ConstructedFrom;
                             _ = baseTypes.TryAdd(b, 0);
                             b = b.BaseType;
                         }
